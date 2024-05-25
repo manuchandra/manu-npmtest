@@ -3,11 +3,11 @@ on:
   push:
     branches:
       - feature/jfrog-oidc
-permissions:
+       permissions:
     id-token: write
 jobs:
- npm-publish-setup:
- runs-on: ubuntu-latest
+    npm-publish-setup:
+    runs-on: ubuntu-latest
     steps:
      - name: "Setup JFrog cli / handshake via OIDC"
        uses: jfrog/setup-jfrog-cli@v4
