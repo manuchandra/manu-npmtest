@@ -1,14 +1,14 @@
 name: "jfrog-oidc-test"
 on:
   push:
-   branches:
+    branches:
       - feature/jfrog-oidc
 permissions:
     id-token: write
 jobs:
-   npm-publish-setup:
-     runs-on: ubuntu-latest
-     steps:
+ npm-publish-setup:
+ runs-on: ubuntu-latest
+    steps:
      - name: "Setup JFrog cli / handshake via OIDC"
        uses: jfrog/setup-jfrog-cli@v4
        env:
