@@ -5,7 +5,6 @@ on:
       - feature/jfrog-oidc
 permissions:
     id-token: write
-
 jobs:
    npm-publish-setup:
      runs-on: ubuntu-latest
