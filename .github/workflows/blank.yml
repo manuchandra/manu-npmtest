@@ -1,30 +1,53 @@
-name: "jfrog-oidc-test"
-on:
-  push:
-    branches:
-      - feature/jfrog-oidc
+name: "JFrog-GitHub NPM Publish OIDC Integration"
+on: push
+
+# This is required as per
+# https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-cloud-providers#adding-permissions-settings
 permissions:
-  id-token: write  
+  id-token: write
+
 jobs:
-  npm-publish-setup:
-    runs-on: ubuntu-latest
-    steps:      
-    - name: "Setup JFrog cli / handshake via OIDC, with user"
-      uses: jfrog/setup-jfrog-cli@v4
-      env:
-        JF_URL: https://hts2.jfrog.io
-      with:
-        oidc-provider-name: github-oidc 
-        oidc-audience: jfrog-github
-    - name: Ping Artifactory
-      run: jf rt ping
-    - name: Get npm auth token
-      run: jf rt curl /api/npm/auth > auth
-    - name: Create .npmrc file
-      run: |
-        echo "loglevel=http" > .npmrc
-        echo "fund=false" >> .npmrc
-        echo "@mtg:registry=https://hts2.jfrog.io/artifactory/api/npm/manu-npm-local/" > .npmrc
-        cat auth | sed "s/^_auth\(.*\)$/\/\/hts2.jfrog.io\/:_auth\1/"  | sed 's/ //g' >> .npmrc 
-    - name: npm install
-      run: npm install @mtg/metrics-emitter --loglevel verbose
+  build:
+     runs-on: ubuntu-latest
+     env:
+      OIDC_AUDIENCE: 'jfrog-github'
+      OIDC_PROVIDER: 'github'
+      PLATFORM_REPO: 'manu-npm-virtual'
+     defaults:
+      run:
+        working-directory: ./package
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v3
+              
+       - name: Setup Node npm
+         uses: actions/setup-node@v3
+   
+       - name: Setup JFrog CLI
+         uses: jfrog/setup-jfrog-cli@v3
+         env:  
+           JF_URL: ${{ secrets.JF_URL }}
+         with:
+           oidc-provider-name: ${{ env.OIDC_PROVIDER }}
+           oidc-audience: ${{ env.OIDC_AUDIENCE }}
+
+       - name: Set CLI Config
+         run: jf npm-config --global=true --repo-resolve=$PLATFORM_REPO --repo-deploy=$PLATFORM_REPO
+           
+       - name: Install Dependencies
+         run: jf npm install
+           
+       - name: Run tests
+         run: npm test
+         
+       - name: Publish
+         run: jf npm publish
+         
+       - name: Publish Build info With JFrog CLI
+         run: |
+          # Collect environment variables for the build
+          jf rt build-collect-env
+          # Collect VCS details from git and add them to the build
+          jf rt build-add-git
+          # Publish build info
+          jf rt build-publish
