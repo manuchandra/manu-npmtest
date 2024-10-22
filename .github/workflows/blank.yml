@@ -35,4 +35,4 @@ jobs:
           jf npm-config --repo-resolve=manu-npm-virtual --repo-deploy=manu-npm-virtual
        - name: npm install
          run: |
-          jf npm install node@20.x --loglevel verbose 
+          jf npm install @extjs --loglevel verbose 
